@@ -1,4 +1,4 @@
-### Scripts used in single-cell analyses
+## Scripts used in single-cell analyses
 
 #### 01. Differential abundance analysis
 
