@@ -11,9 +11,9 @@ pwd="/work22/home/redahiro/analysis/COVID-19_scRNAseq/"
 
 #---------------- cluster setup -----------------#
 cluster_list <- list()
-cluster_1 <- read_csv(paste0(pwd,"sceQTL/CellCount/l1.csv")) %>% .$cluster %>% unique
-cluster_2 <- read_csv(paste0(pwd,"sceQTL/CellCount/l2.csv")) %>% .$cluster %>% unique
-cluster_3 <- read_csv(paste0(pwd,"sceQTL/CellCount/l3.csv")) %>% .$cluster %>% unique
+cluster_1 <- read_csv(paste0(pwd,"CellCount/l1.csv")) %>% .$cluster %>% unique
+cluster_2 <- read_csv(paste0(pwd,"CellCount/l2.csv")) %>% .$cluster %>% unique
+cluster_3 <- read_csv(paste0(pwd,"CellCount/l3.csv")) %>% .$cluster %>% unique
 
 cluster_list[["l1"]] <- cluster_1
 cluster_list[["l2"]] <- cluster_2
