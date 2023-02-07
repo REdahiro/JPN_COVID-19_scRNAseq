@@ -2,7 +2,6 @@
 pheno=$1
 
 ##--- NATMI ---#
-
 source/work22/home/redahiro/conda_env/NATMI/bin/activate
 
 python /work22/home/redahiro/software/scRNAseq_script/CCI/NATMI/ExtractEdges.py \
@@ -25,7 +24,6 @@ python /work22/home/redahiro/software/scRNAseq_script/CCI/NATMI/VisInteractions.
 source/work22/home/redahiro/conda_env/NATMI/bin/deactivate
 
 ##--- CellPhoneDB ---#
-
 source/work22/home/redahiro/conda_env/CellPhoneDB/bin/activate
 
 cellphonedb method statistical_analysis \
@@ -38,7 +36,4 @@ cellphonedb plot heatmap_plot \
      --pvalues-path=${pheno}/pvalues.txt \
      --output-path=${pheno} \
      ./Data/${pheno}_ALL_meta_l3.txt
-
-
-
 
