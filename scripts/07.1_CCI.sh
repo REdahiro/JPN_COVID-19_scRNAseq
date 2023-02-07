@@ -29,12 +29,12 @@ source/work22/home/redahiro/conda_env/CellPhoneDB/bin/activate
 cellphonedb method statistical_analysis \
      ./Data/${pheno}_ALL_meta_l3.txt \
      ./Data/${pheno}_counts.txt \
-     --output-path=/work22/home/redahiro/analysis/COVID-19_scRNAseq/CCI/CellphoneDB/${pheno} \
+     --output-path=./CellphoneDB/${pheno} \
      --counts-data=gene_name --iterations=1000 --result-precision 5 --threads=4 --verbose
 
 cellphonedb plot heatmap_plot \
-     --pvalues-path=${pheno}/pvalues.txt \
-     --output-path=${pheno} \
+     --pvalues-path=./CellphoneDB/${pheno}/pvalues.txt \
+     --output-path=./CellphoneDB/${pheno} \
      ./Data/${pheno}_ALL_meta_l3.txt
 
 
