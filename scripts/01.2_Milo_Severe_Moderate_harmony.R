@@ -58,7 +58,7 @@ milo <- buildGraph(milo, k = 30, d = 30, reduced.dim = "PCA")
 
 
 ##--- Step3: Defining representative neighbourhoods on the KNN graph
-milo <- makeNhoods(milo, prop = proportion, k = 30, d = 30, refined = TRUE, reduced_dims = "PCA")   #  ALL PBMC,T/NK cells: 0.005, Mono/DC,B cells: 0.1
+milo <- makeNhoods(milo, prop = proportion, k = 30, d = 30, refined = TRUE, reduced_dims = "PCA")   #  ALL PBMC,T/NK cells: 0.05, Mono/DC,B cells: 0.1
 
 # check average neighbourhood size: over 5 x N_samples is required 
 p.NhSize = plotNhoodSizeHist(milo)
@@ -92,7 +92,7 @@ nh_graph_pl <- plotNhoodGraphDA(milo, da_results, layout="UMAP",alpha=0.1)     #
 
 ggsave(file = paste0("./Milo/",cluster,"/Milo_UMAP_Severe_Moderate.png"), plot = nh_graph_pl, width = 8.5, height = 7.5, dpi = 300)
 
-nh_graph_pl <- plotNhoodGraphDA(milo, da_results, layout="UMAP",alpha=1)   
+nh_graph_pl <- plotNhoodGraphDA(milo, da_results, layout="UMAP",alpha=1)       # All nodes are colored by their log2 fold change
 ggsave(file = paste0("./Milo/",cluster,"/Milo_UMAP_Severe_Moderate_FDR1.png"), plot = nh_graph_pl, width = 8.5, height = 7.5, dpi = 300)
 
 saveRDS(milo, paste0("./Milo/",cluster,"/Milo_Severe_vs_Moderate.rds"))
@@ -103,7 +103,7 @@ saveRDS(milo, paste0("./Milo/",cluster,"/Milo_Severe_vs_Moderate.rds"))
 ##-----------------------------------------##
 
 # Beeswarm plot
-p.DA_celltype = plotDAbeeswarm(da_results, group.by = "l3")
+p.DA_celltype = plotDAbeeswarm(da_results, group.by = "l3")                   # l3: the most finest annotation
 ggsave(file = paste0("./Milo/",cluster,"/Celltype_fraction_DA.analysis_Severe_vs_Moderate.png"), plot = p.DA_celltype, width = 7.5, height = 7.5, dpi = 300)
 ggsave(file = paste0("./Milo/",cluster,"/Celltype_fraction_DA.analysis_Severe_vs_Moderate.pdf"), plot = p.DA_celltype, width = 7.5, height = 7.5, dpi = 300)
 
