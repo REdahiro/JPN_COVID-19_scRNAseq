@@ -18,7 +18,7 @@ module = "GOBP"
 
 for(list in c("GOBP_RESPONSE_TO_TYPE_I_INTERFERON","GOBP_RESPONSE_TO_INTERFERON_GAMMA")){
 
-   module_gene <- read.table(str_c("/work22/home/redahiro/software/scRNAseq_script/GSEA_geneset/", module,"/",list,".txt", sep=""), sep="\t", h=F, skip=2) %>% 
+   module_gene <- read.table(str_c("/work22/home/redahiro/scRNAseq/reference/GSEA_geneset/", module,"/",list,".txt", sep=""), sep="\t", h=F, skip=2) %>% 
                           as_tibble %>% .$V1 %>% intersect(gene) 
 
    module_gene <- list(c(module_gene))
