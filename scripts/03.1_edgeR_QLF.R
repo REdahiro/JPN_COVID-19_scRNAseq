@@ -19,7 +19,7 @@ cluster_list[["l1"]] <- cluster_1
 cluster_list[["l2"]] <- cluster_2
 cluster_list[["l3"]] <- cluster_3
 
-# setting up 
+# cluster setting 
 cluster_list <- cluster_list[[clustering]]
 
 
