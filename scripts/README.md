@@ -16,4 +16,4 @@
 
 #### 08. Polygenic GWAS signal analysis
 
-#### 09. single-cell eQTL analysis
+#### 09. Single-cell eQTL analysis
