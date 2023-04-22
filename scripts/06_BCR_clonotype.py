@@ -24,7 +24,6 @@ adata.obs.dtypes
 print(adata.obs["l3"].dtype)   # Pandasのdata型 check    #int32 → categoryに変更
 adata.obs["l3"] = adata.obs["l3"].astype('category')
 print(adata.obs["orig.ident"].dtype)
-# 個数の確認
 adata.obs["l3"].value_counts()
 
 #----- Rename categories -----#
@@ -36,6 +35,7 @@ adata.obs['l2'] = adata.obs['l2'].cat.reorder_categories(list(l2_order),ordered=
 
 print(adata.obs['l2'].dtype) 
 adata.obs['l2'].value_counts()
+
 
 #-----------------------------#
 #    TCR Quality Control      #
@@ -58,8 +58,6 @@ print(adata.shape)
 #------------------------------------------------#
 
 #----- Construct a neighborhood graph based on CDR3 nucleotide sequency similariy ----#
-# receptor_arms = "all": both TRA and TRB need to match
-# dual_ir = "primary_only": only consider most abundant pair of TRA/TRB chains
 
 ir.pp.ir_dist(adata)     # computes sequence-distance metric btw all unique CDR3
                          # default: using identity (not alighment), sequecen: nucleotide
@@ -67,35 +65,22 @@ ir.pp.ir_dist(adata)     # computes sequence-distance metric btw all unique CDR3
 # detect connected modules in the graph and annotate them as clonotypes
 ir.tl.define_clonotypes(adata, receptor_arms="all", dual_ir="primary_only", n_jobs=thread)
 
-ir.tl.clonotype_network(adata, min_cells = 2)        # default: sequence="nt", default="identity"
-
-#ax = ir.pl.clonotype_network(adata, color="orig.ident", base_size=20, label_fontsize=9, panel_size=(7, 7))
-#fig = ax.get_figure()
-#fig.savefig("figures/clonotype_network_perSample_nt.png", dpi = 300, bbox_inches="tight")
-#AttributeError: module 'matplotlib.cbook' has no attribute 'iterable' のため
- 
-
+ir.tl.clonotype_network(adata, min_cells = 2)
 
 #----- Recompute CDR3 neighborhood graph and difine clonotype clusters -----#
 ir.pp.ir_dist(
 	    adata, 
 	    metric = "alignment",
 	    sequence = "aa",
-	    cutoff = 10,                     # 距離の値、大きいほど大きなclusterが出来上がる
+	    cutoff = 10,
 	    n_jobs=thread
         )
-
 
 ir.tl.define_clonotype_clusters(
 	   adata, sequence = "aa", metric = "alignment", receptor_arms="all", dual_ir="any", n_jobs=thread
 	   )
 
-
 ir.tl.clonotype_network(adata, min_cells = min_size , sequence = "aa", metric = "alignment")
-
-
-# ir.pl.clonotype_network(adata, color="orig.ident", label_fontsize=9, panel_size=(7, 7), base_size=20)
-# AttributeError: module 'matplotlib.cbook' has no attribute 'iterable'
 
 
 ##-----------------------##
@@ -103,3 +88,5 @@ ir.tl.clonotype_network(adata, min_cells = min_size , sequence = "aa", metric = 
 ##-----------------------## 
 adata.__dict__['_raw'].__dict__['_var'] = adata.__dict__['_raw'].__dict__['_var'].rename(columns={'_index': 'features'})
 adata.write_h5ad(filename = f'BCR_ClonotypeSize_{min_size}.h5ad', compression ='gzip')
+
+
