@@ -5,12 +5,10 @@ import scirpy as ir
 from matplotlib import pyplot as plt
 from cycler import cycler
 
-
 #-------------------------------------------------------------------------------------#
 # dir: /work22/home/redahiro/analysis/COVID-19_scRNAseq/TCR_BCR/TCR
 # env: scirpy
 #-------------------------------------------------------------------------------------#
-
 
 plt.rcParams['figure.figsize'] = 4,4
 plt.rcParams['figure.dpi'] = 300
@@ -23,18 +21,15 @@ sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hint
 vdjdb = sc.read("/work22/home/redahiro/software/scRNAseq_script/TCR_BCR/vdjdb.h5ad")
 #vdjdb = ir.datasets.vdjdb()        # 55,586 
 
-
 # TCR data
 adata = sc.read("TCR.h5ad")                               # 628,715 cells
 print(adata.shape)
 
-
 # metadata edit
 adata.obs.dtypes
-print(adata.obs["l3"].dtype)   # Pandasのdata型 check    #int32 → categoryに変更
+print(adata.obs["l3"].dtype)
 adata.obs["l3"] = adata.obs["l3"].astype('category')
 print(adata.obs["orig.ident"].dtype)
-# 個数の確認
 adata.obs["l3"].value_counts()
 
 #----- Rename categories -----#
@@ -60,7 +55,6 @@ adata.obs['l3'] = adata.obs['l3'].cat.reorder_categories(list(l3_order),ordered=
 print(adata.obs['l3'].dtype) 
 adata.obs['l3'].value_counts()
 
-
 # Status
 adata.obs["Status"] = adata.obs["Status"].astype('category')
 adata.obs['Status'] = adata.obs['Status'].apply(lambda x : 'HC' if x == 0.0 else 'COVID19')
@@ -75,11 +69,10 @@ adata.obs['Severity'] = adata.obs['Severity'].cat.reorder_categories(list(Severi
 ##           select analysis T clusters              ##
 ##---------------------------------------------------##
 
-# remove NK, NK_CD56bright, NKT, gdT(due to low mapping)
+# remove NK, NK_CD56bright, NKT, gdT
 adata = adata[adata.obs["l3"].isin(['CD4_Naive','CD4_Memory','CD4_Ef','Treg','CD8_Naive','CD8_Memory','CD8_Ef','MAIT','Pro_T']),:]
 print("data shape after pick up analysis clusters")
 print(adata.shape)
-
 
 # TCR quality check
 
@@ -99,26 +92,24 @@ print(adata.shape)
 #---------------------------------------------------------------#
 #                     Epitope analysis                          #
 #---------------------------------------------------------------#
+
 # Compute sequence-based distance matrices
 ir.pp.ir_dist(
     adata, vdjdb, 
-    metric="alignment",     # default: identity 
+    metric="alignment",     
     sequence="aa", 
-    cutoff = 10,            # 距離の値、大きいほど大きなclusterが出来上がる
+    cutoff = 10,
     n_jobs=4
 )            
 
 
 # Identify matching entries in a reference database for each cell
-# step:1 creat a list of unique receptor configurations (useful for heavily expaned clonotypes, leading to many cells to a single entry)
-# step:2 compute a pairwise distance matrix of unique receptor configurations
 ir.tl.ir_query(
     adata, vdjdb, 
     metric="alignment", sequence="aa", 
     receptor_arms="any", dual_ir="any",
     n_jobs=4
 )
-
 
 # Return a dataframe with all matching annotations
 ir.tl.ir_query_annotate_df(
@@ -129,8 +120,6 @@ ir.tl.ir_query_annotate_df(
     include_ref_cols=["antigen.species", "antigen.gene"]
 )
 
-
-
 ir.tl.ir_query_annotate(
     adata,
     vdjdb,
@@ -139,7 +128,6 @@ ir.tl.ir_query_annotate(
     include_ref_cols=["antigen.species", "antigen.gene"],
     strategy="most-frequent"
 )
-
 
 #-----------------------#
 #         UAMP          #
@@ -156,9 +144,6 @@ sc.pl.umap(
           ],
     save='clonal_expansion_antigen.png')
 
-# check=adata[adata.obs["antigen.species"].isin(["SARS-CoV-2"]),:]
-
-#adata.obs["integrated_snn_res.0.8"] = adata.obs["integrated_snn_res.0.8"].astype('category')
 adata.obs['SARS-CoV-2'] = adata.obs['antigen.species'].apply(lambda x : "SARS-CoV-2" if x == 'SARS-CoV-2' else "Non_SARS-CoV-2")
 adata.obs['SARS-CoV-2'] = adata.obs['SARS-CoV-2'].astype('category') 
 adata.obs['SARS-CoV-2'] = adata.obs['SARS-CoV-2'].fillna("Non_SARS-CoV-2")
@@ -185,4 +170,5 @@ adata.write_h5ad(filename = 'TCR_filtered_EpitopeInfo.h5ad', compression ='gzip'
 # metadata
 meta_data = adata.obs.loc[:,['antigen.species','antigen.gene','l3']] 
 meta_data.to_csv('TCR_filtered_EpitopeInfo.txt', sep='\t', index=True, index_label='cellID')
+
 
