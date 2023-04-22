@@ -1,19 +1,13 @@
 library(tidyverse)
 
-# dir: /work22/home/redahiro/analysis/COVID-19_scRNAseq/sceQTL/*
-
 PWD="/work22/home/redahiro/analysis/COVID-19_scRNAseq/sceQTL/"
-
-
 
 args <- commandArgs(trailingOnly = TRUE)
 print(args)
 clustering = args[1]
-round = as.numeric(args[2])
 
 # gene setup
-gene_list <- read_csv(paste0(PWD,"/Genome/VCF/round",round,"_CHR.POS_V2G.csv")) %>% .$V2G
-
+gene_list <- read_csv(paste0(PWD,"/Genome/VCF/round5_CHR.POS_V2G.csv")) %>% .$V2G
 
 # cluster setup
 cluster_list <- list()
@@ -29,7 +23,7 @@ cluster_list[["l3"]] <- cluster_3
 #           Genome          #
 #---------------------------#
 # Dosage
-dosage <- read_csv(paste0(PWD,"/Genome/Dosage/round",round,"_genotype.dosage.csv"))
+dosage <- read_csv(paste0(PWD,"/Genome/Dosage/round5_genotype.dosage.csv"))
 
 # Genome_PCA
 pc_dna <- read.table(paste0(PWD,"/Genome/PLINK/PCA_COV70_HC75.evec"), sep="", h=F, skip=1) %>% 
@@ -50,7 +44,7 @@ genome <- genome %>% left_join(sample,by="IID") %>%
 pc_rna <- read_delim("./PCA/PCA_RNA_Pseudobulk_ALL.txt", "\t", col_names=T)
 
 # Pheno
-pheno <- read_csv("./Phenotype/Phenotype_Manual_check_220617.csv") %>% 
+pheno <- read_csv("./Phenotype/Phenotype_data_220617.csv") %>% 
              mutate(Status = if_else(Severity == "HC", 0, 1),
                     Severity = if_else(Severity == "Severe", 2,
                                if_else(Severity == "Moderate", 1, 0)),
@@ -61,8 +55,6 @@ pheno <- read_csv("./Phenotype/Phenotype_Manual_check_220617.csv") %>%
 pheno <- pheno %>% 
             inner_join(genome, by="ID") %>%
             inner_join(pc_rna, by="ID")
-
-preID <- read_csv("./Phenotype/NG_pheno_data_submitted.csv") %>% .$ID
 
 #-------------------------------------#
 #            eQTL analysis            #
@@ -78,7 +70,6 @@ result <- list()
    
 # eQTL analysis per cluster
 
-
 for(i in cluster_list){
 
      print(paste0("START ",i))
@@ -87,7 +78,7 @@ for(i in cluster_list){
      gene_matrix <- read_delim(paste0("./Matrix_",clustering,"/PseudoBulk_matrix_", i,".txt"))
 
      # Sample filtering
-     sub_sample <- count %>% filter(cluster==i) %>% filter(ncells>=6) %>%.$sample           # cells>=6でsample filtering
+     sub_sample <- count %>% filter(cluster==i) %>% filter(ncells>=6) %>%.$sample
      
      # filtering of samples & genes
      gene_analysis <- intersect(gene_list,colnames(gene_matrix))
@@ -113,9 +104,6 @@ for(i in cluster_list){
          #----- making subset -----#
          sub_case <- sub %>% filter(Status=="1")
          sub_hc <- sub %>% filter(Status=="0")
-         sub_case_pre <- sub_case %>% filter(ID %in% preID)
-         sub_case_new <- sub_case %>% filter(!ID %in% preID)
-
 
         # Case: eQTL anlaysis
          nocov <- lm(eGene ~ dosage, data=sub_case)
@@ -123,27 +111,16 @@ for(i in cluster_list){
          SE_no = summary(nocov)$coef[2,2]
          P_no = summary(nocov)$coef[2,4]
 
-         PC2 <- lm(eGene ~ dosage + Age + Sex + Severity + PC1 + PC2 + PC1_d + PC2_d, data=sub_case)
+         PC2 <- lm(eGene ~ dosage + Age + Sex + Severity + days_after_onset + days_after_steroids + PC1 + PC2 + PC1_d + PC2_d, data=sub_case)
          Beta_PC2 = summary(PC2)$coef[2,1]
          SE_PC2 = summary(PC2)$coef[2,2]
          P_PC2 = summary(PC2)$coef[2,4]
- 
-         PC2.s <- lm(eGene ~ dosage + Age + Sex + Severity + days_after_onset + days_after_steroids + PC1 + PC2 + PC1_d + PC2_d, data=sub_case)
-         Beta_PC2.s = summary(PC2.s)$coef[2,1]
-         SE_PC2.s = summary(PC2.s)$coef[2,2]
-         P_PC2.s = summary(PC2.s)$coef[2,4]
 
-         PC4 <- lm(eGene ~ dosage + Age + Sex + Severity + days_after_onset + days_after_steroids + PC1 + PC2 + PC3 + PC4 + PC1_d + PC2_d, data=sub_case)
-         Beta_PC4 = summary(PC4)$coef[2,1]
-         SE_PC4 = summary(PC4)$coef[2,2]
-         P_PC4 = summary(PC4)$coef[2,4]
-
-         sub_result = c(i,g,"Case_ALL",Beta_no,SE_no,P_no,Beta_PC2,SE_PC2,P_PC2,Beta_PC2.s,SE_PC2.s,P_PC2.s,Beta_PC4,SE_PC4,P_PC4) %>% as_tibble %>% t() %>% as.matrix
-         colnames(sub_result) <- c("Cluster","Gene","Condition","B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2","B_PC2.s","SE_PC2.s","P_PC2.s","B_PC4","SE_PC4","P_PC4")
+         sub_result = c(i,g,"Case_ALL",Beta_no,SE_no,P_no,Beta_PC2,SE_PC2,P_PC2) %>% as_tibble %>% t() %>% as.matrix
+         colnames(sub_result) <- c("Cluster","Gene","Condition","B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2")
         
          result[[paste0("Case_ALL_",i,"_",g)]] <- sub_result
         
-
         # HC: eQTL anlaysis
          nocov <- lm(eGene ~ dosage, data=sub_hc)
          Beta_no = summary(nocov)$coef[2,1]
@@ -155,18 +132,13 @@ for(i in cluster_list){
          SE_PC2 = summary(PC2)$coef[2,2]
          P_PC2 = summary(PC2)$coef[2,4]
    
-         PC4 <- lm(eGene ~ dosage + Age + Sex + PC1 + PC2 + PC3 + PC4 + PC1_d + PC2_d, data=sub_hc)
-         Beta_PC4 = summary(PC4)$coef[2,1]
-         SE_PC4 = summary(PC4)$coef[2,2]
-         P_PC4 = summary(PC4)$coef[2,4]
-
-         sub_result = c(i,g,"HC_ALL",Beta_no,SE_no,P_no,Beta_PC2,SE_PC2,P_PC2,Beta_PC2,SE_PC2,P_PC2,Beta_PC4,SE_PC4,P_PC4) %>% as_tibble %>% t() %>% as.matrix
-         colnames(sub_result) <- c("Cluster","Gene","Condition","B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2","B_PC2.s","SE_PC2.s","P_PC2.s","B_PC4","SE_PC4","P_PC4")
+         sub_result = c(i,g,"HC_ALL",Beta_no,SE_no,P_no,Beta_PC2,SE_PC2,P_PC2,Beta_PC2,SE_PC2,P_PC2) %>% as_tibble %>% t() %>% as.matrix
+         colnames(sub_result) <- c("Cluster","Gene","Condition","B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2")
         
          result[[paste0("HC_ALL_",i,"_",g)]] <- sub_result
 
 
-        # Interaction (Status * dosage): eQTL anlaysis
+        # Interaction (Status * dosage)
          nocov <- lm(eGene ~ dosage + Status + dosage*Status, data=sub)
          Beta_no = summary(nocov)$coef[4,1]
          SE_no = summary(nocov)$coef[4,2]
@@ -177,18 +149,8 @@ for(i in cluster_list){
          SE_PC2 = summary(PC2)$coef[10,2]
          P_PC2 = summary(PC2)$coef[10,4]
 
-         PC2.s <- lm(eGene ~ dosage + Status + dosage*Status + Age + Sex + days_after_onset + days_after_steroids + PC1 + PC2 + PC1_d + PC2_d, data=sub)
-         Beta_PC2.s = summary(PC2.s)$coef[12,1]
-         SE_PC2.s = summary(PC2.s)$coef[12,2]
-         P_PC2.s = summary(PC2.s)$coef[12,4]
-   
-         PC4 <- lm(eGene ~ dosage + Status + dosage*Status + Age + Sex + PC1 + PC2 + PC3 + PC4 + PC1_d + PC2_d, data=sub)
-         Beta_PC4 = summary(PC4)$coef[12,1]
-         SE_PC4 = summary(PC4)$coef[12,2]
-         P_PC4 = summary(PC4)$coef[12,4]
-
-         sub_result = c(i,g,"Interaction",Beta_no,SE_no,P_no,Beta_PC2,SE_PC2,P_PC2,Beta_PC2.s,SE_PC2.s,P_PC2.s,Beta_PC4,SE_PC4,P_PC4) %>% as_tibble %>% t() %>% as.matrix
-         colnames(sub_result) <- c("Cluster","Gene","Condition","B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2","B_PC2.s","SE_PC2.s","P_PC2.s","B_PC4","SE_PC4","P_PC4")
+         sub_result = c(i,g,"Interaction",Beta_no,SE_no,P_no,Beta_PC2,SE_PC2,P_PC2) %>% as_tibble %>% t() %>% as.matrix
+         colnames(sub_result) <- c("Cluster","Gene","Condition","B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2")
         
          result[[paste0("Interaction_",i,"_",g)]] <- sub_result
 
@@ -196,7 +158,9 @@ for(i in cluster_list){
      
      }
 
-   
-   summary <- do.call(rbind, result) %>% as_tibble %>% mutate_at(vars("B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2","B_PC2.s","SE_PC2.s","P_PC2.s","B_PC4","SE_PC4","P_PC4"),as.numeric)
 
-   write.csv(summary, paste0("eQTL_round",round,"_variant_results_",clustering,"_PCrna_ALL.csv"), row.names=F)
+   summary <- do.call(rbind, result) %>% as_tibble %>% mutate_at(vars("B_no","SE_no","P_no","B_PC2","SE_PC2","P_PC2"),as.numeric)
+
+   write.csv(summary, paste0("eQTL_round5_variant_results_",clustering,"_PCrna_ALL.csv"), row.names=F)
+
+
