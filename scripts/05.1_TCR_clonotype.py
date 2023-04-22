@@ -21,10 +21,9 @@ print(adata.shape)
 
 # metadata edit
 adata.obs.dtypes
-print(adata.obs["l3"].dtype)   # Pandasのdata型 check    #int32 → categoryに変更
+print(adata.obs["l3"].dtype)
 adata.obs["l3"] = adata.obs["l3"].astype('category')
 print(adata.obs["orig.ident"].dtype)
-# 個数の確認
 adata.obs["l3"].value_counts()
 
 #----- Rename categories -----#
@@ -50,7 +49,6 @@ adata.obs['l3'] = adata.obs['l3'].cat.reorder_categories(list(l3_order),ordered=
 print(adata.obs['l3'].dtype) 
 adata.obs['l3'].value_counts()
 
-
 # Status
 adata.obs["Status"] = adata.obs["Status"].astype('category')
 adata.obs['Status'] = adata.obs['Status'].apply(lambda x : 'HC' if x == 0.0 else 'COVID19')
@@ -65,7 +63,7 @@ adata.obs['Severity'] = adata.obs['Severity'].cat.reorder_categories(list(Severi
 ##           select analysis T clusters              ##
 ##---------------------------------------------------##
 
-# remove NK, NK_CD56bright, NKT, gdT(due to low mapping)
+# remove NK, NK_CD56bright, NKT, gdT
 adata = adata[adata.obs["l3"].isin(['CD4_Naive','CD4_Memory','CD4_Ef','Treg','CD8_Naive','CD8_Memory','CD8_Ef','MAIT','Pro_T']),:]
 print("data shape after pick up analysis clusters")
 print(adata.shape)
@@ -103,19 +101,12 @@ ir.tl.define_clonotypes(adata, receptor_arms="all", dual_ir="primary_only", n_jo
 
 ir.tl.clonotype_network(adata, min_cells = 2)        # default: sequence="nt", default="identity"
 
-#ax = ir.pl.clonotype_network(adata, color="orig.ident", base_size=20, label_fontsize=9, panel_size=(7, 7))
-#fig = ax.get_figure()
-#fig.savefig("figures/clonotype_network_perSample_nt.png", dpi = 300, bbox_inches="tight")
-#AttributeError: module 'matplotlib.cbook' has no attribute 'iterable' のため
- 
-
-
 #----- Recompute CDR3 neighborhood graph and difine clonotype clusters -----#
 ir.pp.ir_dist(
 	    adata, 
 	    metric = "alignment",
 	    sequence = "aa",
-	    cutoff = 10,                     # 距離の値、大きいほど大きなclusterが出来上がる
+	    cutoff = 10,
 	    n_jobs=thread
         )
 
@@ -128,12 +119,10 @@ ir.tl.define_clonotype_clusters(
 ir.tl.clonotype_network(adata, min_cells = min_size , sequence = "aa", metric = "alignment")
 
 
-# ir.pl.clonotype_network(adata, color="orig.ident", label_fontsize=9, panel_size=(7, 7), base_size=20)
-# AttributeError: module 'matplotlib.cbook' has no attribute 'iterable'
-
-
 ##-----------------------##
 ##        Export         ##
 ##-----------------------## 
 adata.__dict__['_raw'].__dict__['_var'] = adata.__dict__['_raw'].__dict__['_var'].rename(columns={'_index': 'features'})
 adata.write_h5ad(filename = f'TCR_ClonotypeSize_{min_size}.h5ad', compression ='gzip')
+
+
