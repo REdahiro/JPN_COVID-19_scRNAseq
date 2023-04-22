@@ -110,11 +110,9 @@ ir.pp.ir_dist(
 	    n_jobs=thread
         )
 
-
 ir.tl.define_clonotype_clusters(
 	   adata, sequence = "aa", metric = "alignment", receptor_arms="all", dual_ir="any", n_jobs=thread
 	   )
-
 
 ir.tl.clonotype_network(adata, min_cells = min_size , sequence = "aa", metric = "alignment")
 
